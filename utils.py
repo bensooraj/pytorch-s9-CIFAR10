@@ -3,6 +3,8 @@ import torch
 import torch.utils.data
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import StepLR
+import numpy as np
+import albumentations as A
 
 def train(
     model: "torch.nn.Module",
@@ -22,7 +24,7 @@ def train(
 
     for batch_idx, (data, target) in enumerate(pbar):
         # get samples
-        data, target = data.to(device), target.to(device)
+        data, target = data['image'].to(device), target.to(device)
 
         # Init
         optimizer.zero_grad()
@@ -69,7 +71,7 @@ def test(
     correct = 0
     with torch.no_grad():
         for data, target in test_data_loader:
-            data, target = data.to(device), target.to(device)
+            data, target = data['image'].to(device), target.to(device)
             output = model(data)
             test_loss += F.nll_loss(
                 output, target, reduction="sum"
@@ -92,3 +94,11 @@ def test(
     )
 
     test_acc.append(100.0 * correct / len(test_data_loader.dataset))
+
+# ref: https://github.com/albumentations-team/albumentations/issues/879#issuecomment-824771225
+class Transforms:
+    def __init__(self, transforms: A.Compose):
+        self.transforms = transforms
+
+    def __call__(self, img, *args, **kwargs):
+        return self.transforms(image=np.array(img))
