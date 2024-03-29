@@ -14,22 +14,23 @@ class Net(nn.Module):
             nn.Conv2d(in_channels=3, out_channels=32, kernel_size=7, stride=1, padding=3, bias=True),
             nn.ReLU(),
             nn.BatchNorm2d(32),
-            nn.Dropout(dropout_value)
         )
 
         # Depthwise Separable Convolution
-        # [C2] Convolution Block 2 | Depthwise Convolution
+        # [C2] Convolution Block 2 
         self.convBlock2 = nn.Sequential(
+            # Depthwise Convolution
             nn.Conv2d(in_channels=32, out_channels=32, kernel_size=5, stride=1, padding=2, groups=32, bias=True),
+            # Pointwise Convolution
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=1, stride=1, padding=0, bias=True),
             nn.ReLU(),
-            nn.BatchNorm2d(32),
+            nn.BatchNorm2d(64),
             nn.Dropout(dropout_value)
         )
 
-        # [C3] Convolution Block 3 | Pointwise Convolution
-        #  , kernel_size=3, stride=2, padding=1, dilation=2, bias=True
+        # [C3] Convolution Block 3
         self.convBlock3 = nn.Sequential(
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1, dilation=2, bias=True),
             nn.ReLU(),
             nn.BatchNorm2d(64),
             nn.Dropout(dropout_value)
@@ -37,10 +38,9 @@ class Net(nn.Module):
 
         # [C4] Convolution Block 4
         self.convBlock4 = nn.Sequential(
-            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, padding=1, dilation=2, bias=True),
+            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, padding=1, bias=True),
             nn.ReLU(),
             nn.BatchNorm2d(128),
-            nn.Dropout(dropout_value)
         )
 
         # Global Average Pooling
@@ -71,18 +71,18 @@ class Net(nn.Module):
         if self.debug:
             print("[AFTER C4]", x.shape)
 
-        x = self.gap(x) # output size: [1, 256, 1, 1]
+        x = self.gap(x) # output size: [1, 128, 1, 1]
         if self.debug:
             print("[AFTER GAP]", x.shape)
 
-        x = x.flatten(start_dim=1) # output size: [1, 256]
+        x = x.flatten(start_dim=1) # output size: [1, 128]
         if self.debug:
             print("[AFTER Flatten]", x.shape)
 
         x = self.fc1(x)
         if self.debug:
             print("[AFTER FC1]", x.shape)
-        # x = x.view(-1, 10)
+
         return F.log_softmax(x, dim=-1)
 
     def summary(self, input_size):
