@@ -113,8 +113,8 @@ Estimated Total Size (MB): 3.71
 ```
 
 ### 4.2 Receptive field and accuracies
-1. Traning accuracy: 57.23%
-2. Testing accuracy: 62.44%
+1. Traning accuracy: 60.09%
+2. Testing accuracy: 64.53%
 3. Receptive field: 45
 
 ## 5. Challenges
