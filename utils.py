@@ -6,6 +6,7 @@ from torch.optim.lr_scheduler import StepLR
 import numpy as np
 import albumentations as A
 
+
 def train(
     model: "torch.nn.Module",
     train_data_loader: "torch.utils.data.DataLoader",
@@ -21,10 +22,11 @@ def train(
     pbar = tqdm(train_data_loader)
     correct = 0
     processed = 0
+    epoch_accuracy = 0
 
     for batch_idx, (data, target) in enumerate(pbar):
         # get samples
-        data, target = data['image'].to(device), target.to(device)
+        data, target = data["image"].to(device), target.to(device)
 
         # Init
         optimizer.zero_grad()
@@ -51,10 +53,13 @@ def train(
         correct += pred.eq(target.view_as(pred)).sum().item()
         processed += len(data)
 
+        epoch_accuracy = 100 * correct / processed
         pbar.set_description(
-            desc=f"Epoch={epoch} Batch_id={batch_idx} Loss={loss.item()} Accuracy={100*correct/processed:0.2f}"
+            desc=f"Epoch={epoch} Batch_id={batch_idx} Loss={loss.item()} Accuracy={epoch_accuracy:0.2f}"
         )
-        train_acc.append(100 * correct / processed)
+        train_acc.append(epoch_accuracy)
+    
+    return epoch_accuracy
 
 
 def test(
@@ -69,9 +74,11 @@ def test(
     model.eval()
     test_loss = 0
     correct = 0
+    epoch_accuracy = 0
+
     with torch.no_grad():
         for data, target in test_data_loader:
-            data, target = data['image'].to(device), target.to(device)
+            data, target = data["image"].to(device), target.to(device)
             output = model(data)
             test_loss += F.nll_loss(
                 output, target, reduction="sum"
@@ -84,16 +91,19 @@ def test(
     test_loss /= len(test_data_loader.dataset)
     test_losses.append(test_loss)
 
+    epoch_accuracy = 100.0 * correct / len(test_data_loader.dataset)
     print(
         "\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n".format(
             test_loss,
             correct,
             len(test_data_loader.dataset),
-            100.0 * correct / len(test_data_loader.dataset),
+            epoch_accuracy,
         )
     )
 
-    test_acc.append(100.0 * correct / len(test_data_loader.dataset))
+    test_acc.append(epoch_accuracy)
+    return epoch_accuracy
+
 
 # ref: https://github.com/albumentations-team/albumentations/issues/879#issuecomment-824771225
 class Transforms:
